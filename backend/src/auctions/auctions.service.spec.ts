@@ -72,13 +72,21 @@ describe('AuctionsService', () => {
   });
 
   describe('findAll', () => {
-    it('should return auctions ordered by createdAt DESC', async () => {
-      await service.findAll();
-      expect(mockAuctionRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          order: { createdAt: 'DESC' },
-        }),
-      );
+    it('should return paginated results', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(0),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      mockAuctionRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
+
+      const result = await service.findAll({ page: 1, limit: 12 });
+      expect(result).toEqual({ data: [], total: 0, page: 1, totalPages: 0 });
+      expect(mockQb.orderBy).toHaveBeenCalledWith('auction.createdAt', 'DESC');
     });
   });
 });

@@ -4,8 +4,10 @@ import {
   Post,
   Param,
   Body,
+  Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuctionsService } from './auctions.service';
 import { AuctionsGateway } from './auctions.gateway';
 import { UsersService } from '../users/users.service';
@@ -26,8 +28,18 @@ export class AuctionsController {
   }
 
   @Get()
-  findAll() {
-    return this.auctionsService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.auctionsService.findAll({
+      page: parseInt(page || '1'),
+      limit: Math.min(parseInt(limit || '12'), 50),
+      status: status,
+      search,
+    });
   }
 
   @Get(':id')
@@ -36,6 +48,7 @@ export class AuctionsController {
   }
 
   @Post(':id/bids')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async placeBid(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: PlaceBidDto,

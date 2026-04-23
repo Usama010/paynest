@@ -48,8 +48,22 @@ export interface PlaceBidPayload {
 
 export const getUsers = () => api.get<User[]>('/users').then((r) => r.data);
 
-export const getAuctions = () =>
-  api.get<Auction[]>('/auctions').then((r) => r.data);
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface AuctionFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}
+
+export const getAuctions = (filters?: AuctionFilters) =>
+  api.get<PaginatedResponse<Auction>>('/auctions', { params: filters }).then((r) => r.data);
 
 export const getAuction = (id: string) =>
   api.get<Auction>(`/auctions/${id}`).then((r) => r.data);

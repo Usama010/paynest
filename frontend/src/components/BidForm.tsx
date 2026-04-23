@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { placeBid } from '../services/api';
 import { useUser } from '../context/UserContext';
+import { useToast } from './Toast';
 import { formatCents } from '../utils/format';
 
 interface Props {
@@ -19,6 +20,7 @@ export default function BidForm({
   isEnded,
 }: Props) {
   const { selectedUser } = useUser();
+  const { addToast } = useToast();
   const isCurrentHighest = selectedUser?.id === highestBidderId;
   const minimumCents =
     currentHighestBidCents > 0
@@ -28,6 +30,13 @@ export default function BidForm({
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const quickBids = [
+    { label: 'Min', cents: minimumCents },
+    { label: '+$5', cents: minimumCents + 500 },
+    { label: '+$10', cents: minimumCents + 1000 },
+    { label: '+$50', cents: minimumCents + 5000 },
+  ];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -40,9 +49,15 @@ export default function BidForm({
         amountCents: Math.round(parseFloat(amount) * 100),
       });
       setAmount('');
+      addToast(`Bid of $${parseFloat(amount).toFixed(2)} placed!`, 'success');
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || 'Failed to place bid');
+      const axiosErr = err as { response?: { data?: { message?: string; statusCode?: number } } };
+      if (axiosErr.response?.data?.statusCode === 429) {
+        setError('Too many requests — slow down!');
+        addToast('Too many requests — slow down!', 'error');
+      } else {
+        setError(axiosErr.response?.data?.message || 'Failed to place bid');
+      }
     } finally {
       setLoading(false);
     }
@@ -59,9 +74,24 @@ export default function BidForm({
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4">
       <h3 className="font-semibold mb-2">Place a Bid</h3>
-      <p className="text-sm text-gray-500 mb-3">
+      <p className="text-sm text-gray-500 mb-2">
         Minimum bid: <span className="font-medium text-indigo-600">{formatCents(minimumCents)}</span>
       </p>
+
+      <div className="flex gap-1.5 mb-3">
+        {quickBids.map((qb) => (
+          <button
+            key={qb.label}
+            type="button"
+            onClick={() => setAmount((qb.cents / 100).toFixed(2))}
+            disabled={!selectedUser || isCurrentHighest}
+            className="px-2.5 py-1 text-xs font-medium rounded-md border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-40 transition-colors"
+          >
+            {qb.label} ({formatCents(qb.cents)})
+          </button>
+        ))}
+      </div>
+
       {!selectedUser && (
         <p className="text-sm text-amber-600 mb-3">Select a user to place bids</p>
       )}

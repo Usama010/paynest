@@ -33,11 +33,35 @@ export class AuctionsService {
     return this.auctionRepo.save(auction);
   }
 
-  async findAll(): Promise<Auction[]> {
-    return this.auctionRepo.find({
-      relations: ['highestBidder'],
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(options: {
+    page: number;
+    limit: number;
+    status?: string;
+    search?: string;
+  }) {
+    const { page, limit, status, search } = options;
+    const qb = this.auctionRepo
+      .createQueryBuilder('auction')
+      .leftJoinAndSelect('auction.highestBidder', 'highestBidder');
+
+    if (status) {
+      qb.andWhere('auction.status = :status', { status });
+    }
+    if (search) {
+      qb.andWhere('LOWER(auction.name) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    qb.orderBy('auction.createdAt', 'DESC');
+
+    const total = await qb.getCount();
+    const data = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string): Promise<Auction> {
