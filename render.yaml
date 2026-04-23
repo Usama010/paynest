@@ -1,0 +1,51 @@
+databases:
+  - name: paynest-db
+    plan: free
+    databaseName: paynest
+
+services:
+  - type: web
+    name: paynest-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/main.js
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: paynest-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: paynest-db
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: paynest-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: paynest-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: paynest-db
+          property: database
+      - key: CORS_ORIGIN
+        value: https://paynest-frontend.onrender.com
+
+  - type: web
+    name: paynest-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://paynest-backend.onrender.com/api
+      - key: VITE_WS_URL
+        value: https://paynest-backend.onrender.com
