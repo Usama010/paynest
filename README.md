@@ -4,7 +4,8 @@ A real-time auction platform where users bid on items and the highest bid update
 
 ## Live Demo
 
-> Deploy URL: _[Add after Render deployment]_
+- **Frontend:** https://paynest-one.vercel.app
+- **Backend API:** https://honest-heart-production-e56f.up.railway.app/api
 
 ## Architecture
 
@@ -126,7 +127,7 @@ docker compose up --build
 GitHub Actions pipeline (`.github/workflows/ci.yml`):
 1. **Backend job:** lint → test → build (with Postgres service container)
 2. **Frontend job:** lint → build
-3. **Deploy job:** triggers Render deploy hooks on push to `main`
+3. **Deploy job:** triggers deploy hooks on push to `main` (Vercel auto-deploys on push, Railway auto-deploys on push)
 
 ## Scalability Notes
 
@@ -134,4 +135,5 @@ GitHub Actions pipeline (`.github/workflows/ci.yml`):
 - **WebSocket scaling:** Add `@socket.io/redis-adapter` for multi-instance broadcasting.
 - **Database indexes:** Composite index on `(status, endTime)` for the cron query. Index on `(auctionId, createdAt)` for bid history.
 - **Connection pooling:** TypeORM uses pg pool by default (10 connections).
-- **Render free tier:** Backend sleeps after 15min of inactivity. Cold start ~30s. Use paid tier for production.
+- **Railway free tier:** $5/month credit covers small workloads. Backend stays awake while credit lasts.
+- **Vercel:** Frontend hosted as static site with automatic deploys on push.
