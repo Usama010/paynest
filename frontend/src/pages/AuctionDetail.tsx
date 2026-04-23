@@ -7,6 +7,7 @@ import { formatCents } from '../utils/format';
 import CountdownTimer from '../components/CountdownTimer';
 import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
+import RaceConditionTest from '../components/RaceConditionTest';
 
 export default function AuctionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -128,6 +129,13 @@ export default function AuctionDetail() {
             currentHighestBidCents={auction.currentHighestBidCents}
             startingPriceCents={auction.startingPriceCents}
             highestBidderId={auction.highestBidderId}
+            isEnded={isEnded}
+          />
+
+          <RaceConditionTest
+            auctionId={auction.id}
+            currentHighestBidCents={auction.currentHighestBidCents}
+            startingPriceCents={auction.startingPriceCents}
             isEnded={isEnded}
           />
         </div>
