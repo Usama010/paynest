@@ -60,16 +60,28 @@ jobs:
       - run: npm run lint
       - run: npm run build
 
-  deploy:
+  docker:
+    runs-on: ubuntu-latest
     needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend Docker image
+        run: docker build -t paynest-backend ./backend
+      - name: Build frontend Docker image
+        run: docker build -t paynest-frontend ./frontend
+
+  deploy:
+    needs: [backend, frontend, docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Backend
         env:
           DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+        if: env.DEPLOY_HOOK != ''
         run: curl -s "$DEPLOY_HOOK"
       - name: Deploy Frontend
         env:
           DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+        if: env.DEPLOY_HOOK != ''
         run: curl -s "$DEPLOY_HOOK"

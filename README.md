@@ -68,7 +68,7 @@ When two bids arrive simultaneously:
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/YOUR_USERNAME/paynest.git
+git clone https://github.com/Usama010/paynest.git
 cd paynest
 
 # 2. Backend
@@ -124,10 +124,42 @@ docker compose up --build
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci.yml`):
-1. **Backend job:** lint → test → build (with Postgres service container)
-2. **Frontend job:** lint → build
-3. **Deploy job:** triggers deploy hooks on push to `main` (Vercel auto-deploys on push, Railway auto-deploys on push)
+GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on every push and PR to `main`.
+
+### Pipeline Jobs
+
+| Job | Steps | Trigger |
+|-----|-------|---------|
+| **backend** | `npm ci` → `lint` → `test` (with Postgres service container) → `build` | push & PR |
+| **frontend** | `npm ci` → `lint` → `build` | push & PR |
+| **docker** | Builds Docker images for both backend and frontend | after backend + frontend pass |
+| **deploy** | Triggers deploy hooks (Vercel + Railway auto-deploy on push) | push to `main` only |
+
+### How to Run the Pipeline
+
+1. Push to `main` or open a PR targeting `main`
+2. Go to **GitHub → Actions tab** to see the pipeline run
+3. All jobs must pass before deploy triggers
+
+### How to Set Up Deployment
+
+- **Vercel (frontend):** Connects to GitHub and auto-deploys on push. No deploy hook needed.
+- **Railway (backend):** Connects to GitHub and auto-deploys on push. No deploy hook needed.
+- **Optional deploy hooks:** Add `RENDER_BACKEND_DEPLOY_HOOK` and `RENDER_FRONTEND_DEPLOY_HOOK` as GitHub Actions secrets if using Render instead.
+
+### Running Docker Locally
+
+```bash
+# Build and run all services (frontend + backend + PostgreSQL)
+docker compose up --build
+
+# Frontend: http://localhost
+# Backend API: http://localhost:3000/api
+
+# Build individual images
+docker build -t paynest-backend ./backend
+docker build -t paynest-frontend ./frontend
+```
 
 ## Scalability Notes
 
